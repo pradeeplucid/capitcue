@@ -8,7 +8,7 @@ const zlib = require('zlib');
 // What we want, and words to find it in Upstox's Global Instruments file (matched on name / trading symbol).
 const WANT = [
   { id: 'sp500',    label: 'S&P 500',       region: 'Americas', match: [/^S&P/i, /S&P 500/i, /^US 500/i] },
-  { id: 'nasdaq',   label: 'Nasdaq 100',    region: 'Americas', match: [/US TECH 100/i, /NASDAQ/i] },
+  { id: 'nasdaq',   label: 'Nasdaq',    region: 'Americas', match: [/US TECH 100/i, /NASDAQ/i] },
   { id: 'dow',      label: 'Dow Jones',     region: 'Americas', match: [/DOW JONES/i, /\^DJI/i] },
   { id: 'nikkei',   label: 'Nikkei 225',    region: 'Asia',     match: [/NIKKEI/i] },
   { id: 'kospi',    label: 'KOSPI',         region: 'Asia',     match: [/KOSPI/i] },
@@ -46,7 +46,7 @@ async function loadGlobalList() {
 async function loadMcx() {
   const all = await getJson(ASSETS + 'MCX.json.gz');
   const pick = (sym) => all
-    .filter(i => i.instrument_type === 'FUT' && (i.underlying_symbol === sym || i.name === sym) && Number(i.expiry) > Date.now() + 5 * 864e5)
+    .filter(i => i.instrument_type === 'FUT' && String(i.trading_symbol || '').toUpperCase().startsWith(sym + ' FUT ') && Number(i.expiry) > Date.now() + 5 * 864e5)
     .sort((a, b) => Number(a.expiry) - Number(b.expiry))[0];
   const g = pick('GOLD'), s = pick('SILVER');
   return {
@@ -62,7 +62,27 @@ async function quotes(keys, token) {
   if (!r.ok) throw new Error(`Upstox ${r.status}`);
   const body = await r.json();
   const out = {};
-  for (const q of Object.values(body.data || {})) out[q.instrument_token] = q;
+  for (const [k, q] of Object.entries(body.data || {})) {
+    if (q.instrument_token) out[q.instrument_token] = q;
+    out[k.replace(':', '|')] = q;
+  }
+  return out;
+}
+// Fallback for anything the full-quote call didn't return: LTP V3 (last price + previous close).
+async function ltpV3(keys, token) {
+  if (!keys.length) return {};
+  const url = `https://api.upstox.com/v3/market-quote/ltp?instrument_key=${encodeURIComponent(keys.join(','))}`;
+  const r = await fetch(url, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
+  if (!r.ok) return {};
+  const body = await r.json();
+  const out = {};
+  for (const [k, q] of Object.entries(body.data || {})) {
+    const cp = Number(q.cp);
+    if (typeof q.last_price !== 'number' || !cp) continue;
+    const v = { last_price: q.last_price, net_change: q.last_price - cp };
+    if (q.instrument_token) out[q.instrument_token] = v;
+    out[k.replace(':', '|')] = v;
+  }
   return out;
 }
 async function quotesTolerant(keys, token) {
@@ -111,7 +131,10 @@ module.exports = async (req, res) => {
     const mcx = cache.mcx || {};
     const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key].filter(Boolean);
     const [q, y10, y30] = await Promise.all([
-      quotesTolerant(keys, token),
+      quotesTolerant(keys, token).then(async (got) => {
+        const gaps = keys.filter(k => !got[k] || typeof got[k].last_price !== 'number');
+        return gaps.length ? Object.assign(got, await ltpV3(gaps, token).catch(() => ({}))) : got;
+      }),
       fredYield('DGS10').catch(() => null),
       fredYield('DGS30').catch(() => null),
     ]);
