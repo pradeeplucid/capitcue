@@ -25,7 +25,7 @@ const WANT = [
 const ASSETS = 'https://assets.upstox.com/market-quote/instruments/exchange/';
 const GLOBAL_FILES = ['global.json.gz', 'GLOBAL.json.gz', 'global.json', 'GLOBAL.json'];
 const TTL = 12 * 60 * 60 * 1000;
-let cache = { at: 0, global: null, mcx: null };
+let cache = { at: 0, global: null, mcx: null, usdfut: null };
 
 async function getJson(url) {
   const r = await fetch(url);
@@ -48,11 +48,34 @@ async function loadMcx() {
   const pick = (sym) => all
     .filter(i => i.instrument_type === 'FUT' && String(i.trading_symbol || '').toUpperCase().startsWith(sym + ' FUT ') && Number(i.expiry) > Date.now() + 5 * 864e5)
     .sort((a, b) => Number(a.expiry) - Number(b.expiry))[0];
-  const g = pick('GOLD'), s = pick('SILVER');
+  const g = pick('GOLD'), s = pick('SILVER'), c = pick('CRUDEOIL');
   return {
     gold:   g ? { key: g.instrument_key, symbol: g.trading_symbol } : null,
     silver: s ? { key: s.instrument_key, symbol: s.trading_symbol } : null,
+    crude:  c ? { key: c.instrument_key, symbol: c.trading_symbol } : null,
   };
+}
+
+// USD/INR fallback: nearest NSE USDINR futures contract, found via Upstox Instrument Search.
+async function findUsdInrFut(token) {
+  const tries = [
+    'query=USDINR&exchanges=NSE&segments=CUR&instrument_types=FUT&expiry=current_month',
+    'query=USDINR&exchanges=NSE&segments=CUR&instrument_types=FUT&expiry=next_month',
+    'query=USDINR&exchanges=NSE&instrument_types=FUT&records=20',
+  ];
+  for (const qs of tries) {
+    try {
+      const r = await fetch(`https://api.upstox.com/v2/instruments/search?${qs}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
+      if (!r.ok) continue;
+      const body = await r.json();
+      const rows = (body.data || []).filter(i => /^USDINR/i.test(i.trading_symbol || '') && /FUT/i.test(i.instrument_type || i.trading_symbol || ''));
+      const now = Date.now();
+      rows.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() + 864e5 > now) || rows[0];
+      if (pick && pick.instrument_key) return { key: pick.instrument_key, symbol: pick.trading_symbol };
+    } catch (e) {}
+  }
+  return null;
 }
 
 async function quotes(keys, token) {
@@ -116,8 +139,8 @@ module.exports = async (req, res) => {
 
   try {
     if (!cache.global || !cache.mcx || Date.now() - cache.at > TTL) {
-      const [g, m] = await Promise.all([loadGlobalList().catch(() => null), loadMcx().catch(() => null)]);
-      cache = { at: Date.now(), global: g || cache.global, mcx: m || cache.mcx };
+      const [g, m, u] = await Promise.all([loadGlobalList().catch(() => null), loadMcx().catch(() => null), findUsdInrFut(token).catch(() => null)]);
+      cache = { at: Date.now(), global: g || cache.global, mcx: m || cache.mcx, usdfut: u || cache.usdfut };
     }
 
     // Match wanted instruments against the file
@@ -129,9 +152,13 @@ module.exports = async (req, res) => {
     }
 
     const mcx = cache.mcx || {};
-    const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key].filter(Boolean);
+    const usdfut = cache.usdfut;
+    const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key, mcx.crude && mcx.crude.key, usdfut && usdfut.key].filter(Boolean);
     const [q, y10, y30] = await Promise.all([
-      quotesTolerant(keys, token).then(async (got) => {
+      Promise.all([
+        quotesTolerant(keys.filter(k => !k.startsWith('GLOBAL_INDICATOR')), token),
+        quotesTolerant(keys.filter(k => k.startsWith('GLOBAL_INDICATOR')), token).catch(() => ({})),
+      ]).then(([a, b]) => Object.assign(a, b)).then(async (got) => {
         const gaps = keys.filter(k => !got[k] || typeof got[k].last_price !== 'number');
         return gaps.length ? Object.assign(got, await ltpV3(gaps, token).catch(() => ({}))) : got;
       }),
@@ -146,15 +173,28 @@ module.exports = async (req, res) => {
       else missing.push(w.label);
     }
 
+    // Upstox rejects GLOBAL_INDICATOR|USDINR for now, so fall back to the NSE USDINR futures price
+    if (!markets.some(m => m.id === 'usdinr') && usdfut) {
+      const s = shape(q[usdfut.key]);
+      if (s) {
+        markets.push({ id: 'usdinr', label: 'USD/INR', region: 'FX', ...s, source: usdfut.symbol });
+        const i = missing.indexOf('USD/INR'); if (i > -1) missing.splice(i, 1);
+      }
+    }
+
     const bullion = {};
     if (mcx.gold)   { const s = shape(q[mcx.gold.key]);   if (s) bullion.gold   = { ...s, contract: mcx.gold.symbol,   unit: '₹ per 10 g' }; }
     if (mcx.silver) { const s = shape(q[mcx.silver.key]); if (s) bullion.silver = { ...s, contract: mcx.silver.symbol, unit: '₹ per kg' }; }
 
+    let crude = null;
+    if (mcx.crude) { const s = shape(q[mcx.crude.key]); if (s) crude = { ...s, contract: mcx.crude.symbol, unit: '₹ per barrel' }; }
+
     const out = {
       updated: new Date().toISOString(),
-      markets, missing, bullion,
+      markets, missing, bullion, crude,
       yields: { us10: y10, us30: y30 },
       globalFileFound: !!cache.global,
+      usdinrSource: (markets.find(m => m.id === 'usdinr') || {}).source || null,
     };
     if (req.query && req.query.debug) {
       out.catalog = list.map(i => ({ name: i.name, key: i.instrument_key, latency: i.latency }));
