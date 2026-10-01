@@ -138,6 +138,12 @@
   .handle b{font-weight:600;}
   .handle small{display:block; color:var(--muted); font-size:.78rem; margin-top:2px;}
   .tag-soon{font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border:1px solid var(--line); padding:3px 7px; border-radius:2px; white-space:nowrap;}
+  .news{display:block; padding:12px 0; border-top:1px solid var(--line); color:var(--ink); text-decoration:none;}
+  .news b{display:block; font-weight:600; font-size:.9rem; line-height:1.4;}
+  .news:hover b{color:var(--brand-ink); text-decoration:underline;}
+  .news small{display:block; color:var(--muted); font-size:.76rem; margin-top:3px;}
+  @media (min-width:861px){ #pulse{max-height:330px; overflow-y:auto; padding-right:6px;} }  /* keep the box from stretching the row on desktop */
+  .pulse-note{font-size:.74rem; color:var(--muted); padding:10px 0 12px; border-top:1px solid var(--line); margin:0;}
 
   /* ---------- Subscribe ---------- */
   .subscribe{margin-top:56px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:36px 0; display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:40px; align-items:center;}
@@ -355,10 +361,9 @@
 
     <aside class="pulse" aria-label="Market Pulse">
       <h3>Market Pulse</h3>
-      <p>Live posts from the handles that move Indian markets.</p>
-      <div class="handle"><div><b>@REDBOXINDIA</b><small>Breaking market news</small></div><span class="tag-soon">Soon</span></div>
-      <div class="handle"><div><b>@BSEIndia</b><small>Exchange announcements</small></div><span class="tag-soon">Soon</span></div>
-      <div class="handle"><div><b>@moneycontrolcom</b><small>Markets and business</small></div><span class="tag-soon">Soon</span></div>
+      <p>Latest headlines from Indian business media and the exchange.</p>
+      <div id="pulse"><p class="loading">Loading headlines…</p></div>
+      <p class="pulse-note">Headlines link to the original publishers.</p>
     </aside>
   </div>
 
@@ -560,7 +565,27 @@
       .catch(function(){ cols.forEach(function(c){ if(!$('g-'+c).dataset.ok) $('g-'+c).innerHTML = FAIL; }); });
   }
 
-  renderTicker(); clock(); market(); stocks(); globalMkts();
+  // ----- Market Pulse: headlines from /api/news (RSS) -----
+  function ago(ts){
+    var m = Math.max(1, Math.round((Date.now() - ts) / 60000));
+    return m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago';
+  }
+  function pulse(){
+    fetch('/api/news',{cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        var el = $('pulse');
+        if(!d || !d.items || !d.items.length){ if(!el.dataset.ok) el.innerHTML = '<p class="loading">Headlines aren’t available right now.</p>'; return; }
+        el.innerHTML = d.items.map(function(x){
+          return '<a class="news" href="'+esc(x.link)+'" target="_blank" rel="noopener noreferrer"><b>'+esc(x.title)+'</b><small>'+esc(x.source)+' · '+ago(x.ts)+'</small></a>';
+        }).join('');
+        el.dataset.ok = 1;
+      })
+      .catch(function(){ var el = $('pulse'); if(!el.dataset.ok) el.innerHTML = '<p class="loading">Headlines aren’t available right now.</p>'; });
+  }
+
+  renderTicker(); clock(); market(); stocks(); globalMkts(); pulse();
+  setInterval(pulse, 300000);
   setInterval(globalMkts, 180000);
   setInterval(clock, 60000);
   setInterval(market, 180000);
