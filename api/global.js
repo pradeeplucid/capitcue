@@ -1,4 +1,4 @@
-// CapitCue: global indices, USD/INR, Brent (Upstox Global Instruments), US yields (FRED),
+// CapitCue: global indices, USD/INR, Brent (Upstox Global Instruments), US yields (US Treasury, FRED backup),
 // and MCX Gold & Silver in ₹ (Upstox).
 // Served at https://capitcue.in/api/global   Needs env var UPSTOX_ANALYTICS_TOKEN
 // Add ?debug=1 to the URL to see every global instrument Upstox offers.
@@ -110,7 +110,28 @@ function shape(q) {
   return { last: q.last_price, change, pct: prev ? (change / prev) * 100 : 0 };
 }
 
-// US Treasury yields from FRED (public data; daily, previous business day).
+// US Treasury yields from the U.S. Treasury's own daily par yield curve (official; the latest US close,
+// usually posted the same evening). Falls back to FRED, which runs about a day behind.
+async function treasuryYields() {
+  const parse = async (year) => {
+    const r = await fetch(`https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${year}/all?type=daily_treasury_yield_curve&field_tdr_date_value=${year}&page&_format=csv`, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`Treasury ${r.status}`);
+    const lines = (await r.text()).trim().split('\n').map(l => l.replace(/"/g, '').split(','));
+    const head = lines[0], i10 = head.indexOf('10 Yr'), i30 = head.indexOf('30 Yr');
+    if (i10 < 0 || i30 < 0) throw new Error('Treasury columns changed');
+    return lines.slice(1).filter(c => c[0] && !isNaN(parseFloat(c[i10])) && !isNaN(parseFloat(c[i30]))).map(c => ({ date: c[0], t10: parseFloat(c[i10]), t30: parseFloat(c[i30]) }));
+  };
+  const year = new Date().getUTCFullYear();
+  let rows = await parse(year);
+  if (rows.length < 2) rows = rows.concat(await parse(year - 1).catch(() => []));   // early January: need the prior year's last day
+  if (rows.length < 2) throw new Error('Treasury: not enough rows');
+  const [a, b] = rows;                                                               // newest first
+  const iso = a.date.replace(/^(\d\d)\/(\d\d)\/(\d{4})$/, '$3-$1-$2');
+  const mk = (k) => ({ last: a[k], bps: Math.round((a[k] - b[k]) * 100), date: iso });
+  return { us10: mk('t10'), us30: mk('t30') };
+}
+
+// US Treasury yields from FRED (public data; daily, runs about a day behind the Treasury's own feed).
 async function fredYield(series) {
   const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
   const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${series}&cosd=${since}`);
@@ -143,7 +164,7 @@ module.exports = async (req, res) => {
     const mcx = cache.mcx || {};
     const usdfuts = cache.usdfut || [];
     const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key, mcx.crude && mcx.crude.key, ...usdfuts.map(c => c.key)].filter(Boolean);
-    const [q, y10, y30] = await Promise.all([
+    const [q, ylds] = await Promise.all([
       Promise.all([
         quotesTolerant(keys.filter(k => !k.startsWith('GLOBAL_INDICATOR')), token),
         quotesTolerant(keys.filter(k => k.startsWith('GLOBAL_INDICATOR')), token).catch(() => ({})),
@@ -151,8 +172,10 @@ module.exports = async (req, res) => {
         const gaps = keys.filter(k => !got[k] || typeof got[k].last_price !== 'number');
         return gaps.length ? Object.assign(got, await ltpV3(gaps, token).catch(() => ({}))) : got;
       }),
-      fredYield('DGS10').catch(() => null),
-      fredYield('DGS30').catch(() => null),
+      treasuryYields().catch(async () => {
+        const [us10, us30] = await Promise.all([fredYield('DGS10').catch(() => null), fredYield('DGS30').catch(() => null)]);
+        return { us10, us30 };
+      }),
     ]);
 
     const markets = [], missing = [];
@@ -184,7 +207,7 @@ module.exports = async (req, res) => {
     const out = {
       updated: new Date().toISOString(),
       markets, missing, bullion, crude,
-      yields: { us10: y10, us30: y30 },
+      yields: { us10: ylds.us10, us30: ylds.us30 },
       globalFileFound: !!cache.global,
       usdinrSource: (markets.find(m => m.id === 'usdinr') || {}).source || null,
     };
