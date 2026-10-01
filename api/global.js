@@ -71,7 +71,8 @@ async function findUsdInrFut(token) {
       const rows = (body.data || []).filter(i => /^USDINR/i.test(i.trading_symbol || '') && /FUT/i.test(i.instrument_type || i.trading_symbol || ''));
       const now = Date.now();
       rows.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
-      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() + 864e5 > now) || rows[0];
+      // Skip contracts expiring within 2 days: on expiry day they stop trading and show a price of 0.
+      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() > now + 2 * 864e5) || rows[rows.length - 1];
       if (pick && pick.instrument_key) return { key: pick.instrument_key, symbol: pick.trading_symbol };
     } catch (e) {}
   }
@@ -116,7 +117,7 @@ async function quotesTolerant(keys, token) {
   }
 }
 function shape(q) {
-  if (!q || typeof q.last_price !== 'number') return null;
+  if (!q || typeof q.last_price !== 'number' || q.last_price <= 0) return null; // 0 = no trades, not a real price
   const change = Number(q.net_change) || 0, prev = q.last_price - change;
   return { last: q.last_price, change, pct: prev ? (change / prev) * 100 : 0 };
 }
