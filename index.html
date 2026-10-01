@@ -60,9 +60,9 @@
 
   /* ---------- Ticker ---------- */
   .ticker-wrap{overflow:hidden; white-space:nowrap; border-bottom:1px solid var(--line); background:var(--paper-2);}
-  .ticker{display:inline-block; padding:9px 0; animation:scroll 45s linear infinite; font-size:.8rem;}
+  .ticker{display:inline-block; padding:9px 0; animation:scroll 40s linear infinite; font-size:.8rem;}
   .ticker:hover{animation-play-state:paused;}
-  .ticker span{margin-right:34px; color:var(--muted); font-weight:500; letter-spacing:.02em;}
+  .ticker span{margin-right:44px; color:var(--muted); font-weight:500; letter-spacing:.02em;}
   .ticker b{font-weight:600; margin-left:6px;}
   @keyframes scroll{from{transform:translateX(0)} to{transform:translateX(-50%)}}
   @media (prefers-reduced-motion: reduce){ .ticker{animation:none;} }
@@ -237,8 +237,8 @@
   </div>
 </nav>
 
-<!-- Ticker: live Nifty 50 stock prices -->
-<div class="ticker-wrap" id="ticker-wrap" aria-hidden="true" hidden>
+<!-- Ticker: key markets (built by the script below) -->
+<div class="ticker-wrap" id="ticker-wrap" aria-hidden="true">
   <div class="ticker num" id="ticker"></div>
 </div>
 
@@ -253,7 +253,7 @@
       <div class="idx"><h4>India VIX</h4><div class="val" data-q="vix" data-f="last">13.49</div><div class="chg up" data-q="vix" data-f="chg">&#9650; 0.08 &middot; 0.60%</div></div>
     </div>
     <div class="others num">
-      <span>USD/INR<b data-g="usdinr" class="up">95.98 &#9650;0.04%</b></span>
+      <span><span id="usdinr-l">USD/INR</span><b data-g="usdinr" class="up">95.98 &#9650;0.04%</b></span>
       <span>Brent<b data-g="brent" class="up">$97.42 &#9650;1.31%</b></span>
       <span class="src" id="updated">Live data via Upstox &middot; refreshed every 3 min</span>
     </div>
@@ -415,6 +415,31 @@
     el.lastChild.textContent = open ? 'Market open' : 'Market closed';
   }
 
+
+  // ----- Ticker: Nifty, Sensex, Bank Nifty, USD-INR, Crude, Dollar Index, Nasdaq, Dow Jones -----
+  // Dollar Index isn't available from Upstox yet: update this figure in the daily update.
+  var DXY = { last: 101.26, pct: -0.11 };
+  var TICK = [
+    ['nifty','NIFTY'], ['sensex','SENSEX'], ['banknifty','BANK NIFTY'], ['usdinr','USD-INR'],
+    ['crude','CRUDE (MCX)'], ['dxy','DOLLAR INDEX'], ['nasdaq','NASDAQ'], ['dow','DOW JONES']
+  ];
+  var tickData = {
+    nifty: { last: 22620.45, pct: -0.42 }, sensex: { last: 72480.29, pct: -0.07 },
+    banknifty: { last: 54633.05, pct: 0.69 }, usdinr: { last: 95.98, pct: 0.04 }, dxy: DXY
+  };
+  function renderTicker(){
+    var html = TICK.filter(function(t){ return tickData[t[0]]; }).map(function(t){
+      var x = tickData[t[0]], pre = t[0] === 'crude' ? '\u20B9' : '';
+      var val = t[0] === 'crude' ? x.last.toLocaleString('en-IN',{maximumFractionDigits:0}) : fmt(x.last);
+      return '<span>'+t[1]+'<b class="'+dir(x.pct)+'">'+pre+val+' '+(x.pct >= 0 ? '\u25B2' : '\u25BC')+Math.abs(x.pct).toFixed(2)+'%</b></span>';
+    }).join('');
+    var el = $('ticker');
+    el.innerHTML = html + html;
+    // Keep a calm, constant speed (about 40 px per second) whatever the content width
+    var secs = Math.max(20, Math.round(el.scrollWidth / 2 / 40));
+    if(el.dataset.secs != secs){ el.style.animationDuration = secs + 's'; el.dataset.secs = secs; }
+  }
+
   // ----- Indices + sectors -----
   function market(){
     fetch('/api/market',{cache:'no-store'})
@@ -423,11 +448,13 @@
         if(!d){ if(!$('sector-grid').dataset.ok) $('sector-grid').innerHTML = FAIL; return; }
         Object.keys(d.quotes || {}).forEach(function(k){
           var q = d.quotes[k], up = q.change >= 0, arrow = up ? '\u25B2' : '\u25BC';
+          if(k !== 'vix') tickData[k] = q;
           document.querySelectorAll('[data-q="'+k+'"]').forEach(function(el){
             if(el.dataset.f === 'last') el.textContent = fmt(q.last);
             else { el.textContent = arrow + ' ' + fmt(Math.abs(q.change)) + ' \u00B7 ' + Math.abs(q.pct).toFixed(2) + '%'; el.classList.toggle('up', up); el.classList.toggle('down', !up); }
           });
         });
+        renderTicker();
         var s = d.sectors || [];
         if(s.length){
           var max = Math.max.apply(null, s.map(function(x){ return Math.abs(x.pct); }).concat([1]));
@@ -470,11 +497,6 @@
           $('heat').innerHTML = n50.map(function(x){
             return '<div class="tile '+tileClass(x.pct)+'" title="'+esc(x.n)+' \u00B7 '+fmt(x.ltp)+'"><b>'+esc(x.s)+'</b><span>'+sign(x.pct)+'</span></div>';
           }).join('');
-          var tick = n50.slice().sort(function(a,b){ return a.s < b.s ? -1 : 1; }).map(function(x){
-            return '<span>'+esc(x.s)+'<b class="'+dir(x.pct)+'">'+fmt(x.ltp)+' '+(x.pct >= 0 ? '\u25B2' : '\u25BC')+Math.abs(x.pct).toFixed(2)+'%</b></span>';
-          }).join('');
-          $('ticker').innerHTML = tick + tick;
-          $('ticker-wrap').hidden = false;
         }
         $('gainers').innerHTML = rows(d.gainers);
         $('losers').innerHTML = rows(d.losers);
@@ -502,8 +524,10 @@
         if(!d){ cols.forEach(function(c){ if(!$('g-'+c).dataset.ok) $('g-'+c).innerHTML = FAIL; }); return; }
         var by = {Americas:[], Asia:[], Europe:[]};
         (d.markets || []).forEach(function(m){
+          if(m.id === 'usdinr' || m.id === 'nasdaq' || m.id === 'dow') tickData[m.id] = m;
           var col = m.region === 'India' ? 'Asia' : m.region;
           if(by[col]) by[col].push(m);
+          if(m.id === 'usdinr' && m.source) $('usdinr-l').textContent = 'USD/INR fut';
           if(m.region === 'FX'){
             document.querySelectorAll('[data-g="'+m.id+'"]').forEach(function(el){
               el.textContent = (m.id === 'brent' ? '$' : '') + fmt(m.last) + ' ' + (m.pct >= 0 ? '\u25B2' : '\u25BC') + Math.abs(m.pct).toFixed(2) + '%';
@@ -517,6 +541,8 @@
           }).join('') : '<p class="empty">Not available right now.</p>';
           $('g-'+c).dataset.ok = 1;
         });
+        if(d.crude) tickData.crude = d.crude;
+        renderTicker();
         var y = d.yields || {};
         function yld(id, v){ if(!v) return; var el = $(id); el.textContent = v.last.toFixed(2) + '% ' + (v.bps >= 0 ? '\u25B2' : '\u25BC') + Math.abs(v.bps) + ' bps'; el.className = v.bps > 0 ? 'down' : v.bps < 0 ? 'up' : ''; }
         yld('y10', y.us10); yld('y30', y.us30);
@@ -534,7 +560,7 @@
       .catch(function(){ cols.forEach(function(c){ if(!$('g-'+c).dataset.ok) $('g-'+c).innerHTML = FAIL; }); });
   }
 
-  clock(); market(); stocks(); globalMkts();
+  renderTicker(); clock(); market(); stocks(); globalMkts();
   setInterval(globalMkts, 180000);
   setInterval(clock, 60000);
   setInterval(market, 180000);
