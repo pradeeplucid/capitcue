@@ -72,7 +72,8 @@ async function findUsdInrFut(token) {
       const now = Date.now();
       rows.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
       // Skip contracts expiring within 2 days: on expiry day they stop trading and show a price of 0.
-      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() > now + 2 * 864e5) || rows[rows.length - 1];
+      // If this search only found such a contract, try the next search (next month).
+      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() > now + 2 * 864e5);
       if (pick && pick.instrument_key) return { key: pick.instrument_key, symbol: pick.trading_symbol };
     } catch (e) {}
   }
