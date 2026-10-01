@@ -32,7 +32,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   :root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
-  html{scroll-padding-top:calc(16px + env(safe-area-inset-top,0px)); scroll-behavior:smooth;}
+  html{scroll-padding-top:calc(64px + env(safe-area-inset-top,0px)); scroll-behavior:smooth;}  /* leaves room for the sticky section bar */
   @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
   body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
   img{max-width:100%;}
@@ -51,7 +51,7 @@
   .masthead{text-align:center; padding:26px 0 16px;}
   .masthead img{height:44px; width:auto; display:inline-block;}
   .masthead .tag{font-family:var(--serif-d); font-style:italic; font-weight:500; color:var(--muted); font-size:1.02rem; margin-top:8px;}
-  nav.sections{border-top:1px solid var(--rule); border-bottom:3px double var(--rule);}
+  nav.sections{border-top:1px solid var(--rule); border-bottom:3px double var(--rule); position:sticky; top:0; z-index:50; background:var(--paper);}
   nav.sections .wrap{display:flex; justify-content:center; gap:0 34px; overflow-x:auto; scrollbar-width:none;}
   nav.sections a{white-space:nowrap;}
   @media (max-width:520px){ nav.sections .wrap{gap:0 18px; justify-content:flex-start;} nav.sections a{font-size:.7rem; letter-spacing:.08em;} }
@@ -209,9 +209,6 @@
   .li.g{grid-template-columns:minmax(0,1fr) auto 76px;}
   .bonds{display:flex; flex-wrap:wrap; gap:10px 40px; margin-top:22px; padding-top:14px; border-top:1px solid var(--line); font-size:.9rem;}
   .bonds span{color:var(--muted);} .bonds b{font-weight:600; margin-left:6px;} .bonds small{color:var(--muted); font-size:.78rem; margin-left:auto;}
-  .bullion{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid var(--rule); border-bottom:1px solid var(--line);}
-  .bullion .idx:first-child{padding-left:0;}
-  .bullion .idx small{display:block; font-size:.76rem; color:var(--muted); margin-top:6px;}
   .empty{font-size:.88rem; color:var(--muted); padding:12px 0; border-bottom:1px solid var(--line);}
 </style>
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMCSURBVFhH7ZbNS1RRGMafVoJ90sKFBUWUgR+EKS1amLqJ/oA2KeU9Z2acD9MUJkNKFy6qRRFiZVoRCNa2gkzsnnMnx1HHSS2NiFwEtSgVa9Mq8MQ5lxnnniHyYyYK/MHLHM553/N1n/vMBTb4r2FGCKbB9O6/g1VThKhXYNQr8NLI14czDzM6MBkQmKoTYOS6PpxZuH8LGJnHsEeoYOQrYp5sPS1zWK7T6vSc2jERELDoKT0tczAyjHHf8gZkm9GQnpYZTOOQuvaQa3kDsh32CHBSqKenH046lfDii8fD7ruhp6eXMNkKThfUDegbUGKkcxio3qyXpQ/TMBzi08Meq9bL0odJRhzi00OOmWRIL0sPg6QYkSTxMSow5LZDtmWfHJOPwnIX6eXrh5FbmEwSX1guTD6B089qE/F+5Yy0Qy9fH6NV28Doov2qJS9EmmHRVocubGecV26ZNphBHYtYLoFIrWzvV39K8g/J0sQo3TJtmMYYokniG/MKvCAzakxgE0zyASNqQ3YoZyTD+jRrg7lK1GnlqZOvnxuXEjmcXnGYU1yM0jXXDSddjuuXk4dcS3jXsDeRM3muwPGGJDZJOh1zrZpBz3Yw+s0hvphfIOJ/fAfIDpbBf6ECniUgC0O1zOERtlsuKPdcMyZxpzhfLCBy7lY29FTlTdyu3SNuunJFazHCOU9ONuKVlqtqSY0+7coxjXGH+OSponUz3kpc620qEdH+HhHt7xb3fYWCnshqx2hg1nFbtjOO6NOuDE5KlbJ18U0HW64eREuX94CY4n3itfVQPGotF+25COBNU3uKXqQ2pIuuGka7UyaTN/Dl8r42IK+7sfRn38Uy0dt8RAQr8OPpbuzCx7b8lE1L95Quuir4mR3g5HvqdRqReIq7AEeDx/DgfDnutRzH4UQtI7GUx8bIonLTFcNoPd7W21858Q/P6bPyeRI9NQVOvJipX66Tc8i5OPXpqb+H0wFEvXPqA0NG2D0HTt+r1/JPPKc7wemsqonXR33y95meusE/wS8T81jIpqUJQQAAAABJRU5ErkJggg==">
@@ -288,22 +285,13 @@
 
   <!-- Global markets -->
   <section class="sec" id="global">
-    <div class="label">Global markets <small>Live via Upstox &middot; US yields via FRED</small></div>
+    <div class="label">Global markets <small>Live via Upstox &middot; US yields: latest US close (US Treasury)</small></div>
     <div class="globe num">
       <div><h3 class="sub">Americas</h3><div class="list" id="g-Americas"><p class="loading">Loading&hellip;</p></div></div>
       <div><h3 class="sub">Asia</h3><div class="list" id="g-Asia"><p class="loading">Loading&hellip;</p></div></div>
       <div><h3 class="sub">Europe</h3><div class="list" id="g-Europe"><p class="loading">Loading&hellip;</p></div></div>
     </div>
     <div class="bonds num" id="bonds"><span>US 10-year yield<b id="y10">&mdash;</b></span><span>US 30-year yield<b id="y30">&mdash;</b></span><small id="y-date"></small></div>
-  </section>
-
-  <!-- Bullion (Indian prices) -->
-  <section class="sec" id="bullion">
-    <div class="label">Bullion <small>MCX futures, Indian prices in &#8377;</small></div>
-    <div class="bullion num">
-      <div class="idx"><h4>Gold</h4><div class="val" id="gold-v">&mdash;</div><div class="chg" id="gold-c"></div><small id="gold-n">&#8377; per 10 g</small></div>
-      <div class="idx"><h4>Silver</h4><div class="val" id="silver-v">&mdash;</div><div class="chg" id="silver-c"></div><small id="silver-n">&#8377; per kg</small></div>
-    </div>
   </section>
 
   <!-- Sectors -->
@@ -412,21 +400,20 @@
   }
 
 
-  // ----- Ticker: Nifty, Sensex, Bank Nifty, USD-INR, Crude, Dollar Index, Nasdaq, Dow Jones -----
-  // Dollar Index isn't available from Upstox yet: update this figure in the daily update.
-  var DXY = { last: 101.26, pct: -0.11 };
+  // ----- Ticker: Nifty, Sensex, Bank Nifty, USD-INR, Gold, Silver, Crude, Nasdaq, Dow Jones (all live) -----
   var TICK = [
     ['nifty','NIFTY'], ['sensex','SENSEX'], ['banknifty','BANK NIFTY'], ['usdinr','USD-INR'],
-    ['crude','CRUDE (MCX)'], ['dxy','DOLLAR INDEX'], ['nasdaq','NASDAQ'], ['dow','DOW JONES']
+    ['gold','GOLD (MCX)'], ['silver','SILVER (MCX)'], ['crude','CRUDE (MCX)'], ['nasdaq','NASDAQ'], ['dow','DOW JONES']
   ];
+  var RUPEE = { gold:1, silver:1, crude:1 };   // MCX prices are shown in rupees, no decimals
   var tickData = {
     nifty: { last: 22620.45, pct: -0.42 }, sensex: { last: 72480.29, pct: -0.07 },
-    banknifty: { last: 54633.05, pct: 0.69 }, usdinr: { last: 95.98, pct: 0.04 }, dxy: DXY
+    banknifty: { last: 54633.05, pct: 0.69 }, usdinr: { last: 95.98, pct: 0.04 }
   };
   function renderTicker(){
     var html = TICK.filter(function(t){ return tickData[t[0]]; }).map(function(t){
-      var x = tickData[t[0]], pre = t[0] === 'crude' ? '\u20B9' : '';
-      var val = t[0] === 'crude' ? x.last.toLocaleString('en-IN',{maximumFractionDigits:0}) : fmt(x.last);
+      var x = tickData[t[0]], pre = RUPEE[t[0]] ? '\u20B9' : '';
+      var val = RUPEE[t[0]] ? x.last.toLocaleString('en-IN',{maximumFractionDigits:0}) : fmt(x.last);
       return '<span>'+t[1]+'<b class="'+dir(x.pct)+'">'+pre+val+' '+(x.pct >= 0 ? '\u25B2' : '\u25BC')+Math.abs(x.pct).toFixed(2)+'%</b></span>';
     }).join('');
     var el = $('ticker');
@@ -511,7 +498,7 @@
       .catch(function(){ ids.forEach(function(id){ if(!$(id).dataset.ok) $(id).innerHTML = FAIL; }); });
   }
 
-  // ----- Global markets, yields, bullion, USD/INR, Brent -----
+  // ----- Global markets, yields, gold/silver/crude (ticker), USD/INR, Brent -----
   function globalMkts(){
     var cols = ['Americas','Asia','Europe'];
     fetch('/api/global',{cache:'no-store'})
@@ -538,20 +525,15 @@
           $('g-'+c).dataset.ok = 1;
         });
         if(d.crude) tickData.crude = d.crude;
+        var b = d.bullion || {};
+        if(b.gold) tickData.gold = b.gold;
+        if(b.silver) tickData.silver = b.silver;
         renderTicker();
         var y = d.yields || {};
         function yld(id, v){ if(!v) return; var el = $(id); el.textContent = v.last.toFixed(2) + '% ' + (v.bps >= 0 ? '\u25B2' : '\u25BC') + Math.abs(v.bps) + ' bps'; el.className = v.bps > 0 ? 'down' : v.bps < 0 ? 'up' : ''; }
         yld('y10', y.us10); yld('y30', y.us30);
         var yd = (y.us10 || y.us30 || {}).date;
         if(yd) $('y-date').textContent = 'Close of ' + new Date(yd + 'T00:00:00Z').toLocaleDateString('en-IN',{day:'numeric', month:'short', timeZone:'UTC'});
-        var b = d.bullion || {};
-        ['gold','silver'].forEach(function(k){
-          var x = b[k]; if(!x) return;
-          $(k+'-v').textContent = '\u20B9' + x.last.toLocaleString('en-IN',{maximumFractionDigits:0});
-          var c = $(k+'-c'); c.textContent = (x.change >= 0 ? '\u25B2 ' : '\u25BC ') + Math.abs(x.change).toLocaleString('en-IN',{maximumFractionDigits:0}) + ' \u00B7 ' + Math.abs(x.pct).toFixed(2) + '%';
-          c.className = 'chg ' + dir(x.change);
-          $(k+'-n').textContent = x.unit + ' \u00B7 ' + x.contract;
-        });
       })
       .catch(function(){ cols.forEach(function(c){ if(!$('g-'+c).dataset.ok) $('g-'+c).innerHTML = FAIL; }); });
   }
