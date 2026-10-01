@@ -156,7 +156,23 @@ module.exports = async (req, res) => {
       yields: { us10: y10, us30: y30 },
       globalFileFound: !!cache.global,
     };
-    if (req.query && req.query.debug) out.catalog = list.map(i => ({ name: i.name, key: i.instrument_key, latency: i.latency }));
+    if (req.query && req.query.debug) {
+      out.catalog = list.map(i => ({ name: i.name, key: i.instrument_key, latency: i.latency }));
+      // Raw Upstox replies for anything missing, to see why it isn't returning a price
+      const probe = WANT.filter(w => found[w.id] && !markets.some(m => m.id === w.id)).map(w => found[w.id]);
+      out.probe = await Promise.all(probe.map(async (k) => {
+        const res1 = await Promise.all([
+          `https://api.upstox.com/v2/market-quote/quotes?instrument_key=${encodeURIComponent(k)}`,
+          `https://api.upstox.com/v3/market-quote/ltp?instrument_key=${encodeURIComponent(k)}`,
+        ].map(async (u) => {
+          try {
+            const r = await fetch(u, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
+            return { url: u.split('?')[0], status: r.status, body: (await r.text()).slice(0, 400) };
+          } catch (e) { return { url: u.split('?')[0], error: String(e.message || e) }; }
+        }));
+        return { key: k, replies: res1 };
+      }));
+    }
 
     res.setHeader('Cache-Control', 's-maxage=180, stale-while-revalidate=600');
     res.status(200).json(out);
