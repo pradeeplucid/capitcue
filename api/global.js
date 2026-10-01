@@ -56,28 +56,15 @@ async function loadMcx() {
   };
 }
 
-// USD/INR fallback: nearest NSE USDINR futures contract, found via Upstox Instrument Search.
-async function findUsdInrFut(token) {
-  const tries = [
-    'query=USDINR&exchanges=NSE&segments=CUR&instrument_types=FUT&expiry=current_month',
-    'query=USDINR&exchanges=NSE&segments=CUR&instrument_types=FUT&expiry=next_month',
-    'query=USDINR&exchanges=NSE&instrument_types=FUT&records=20',
-  ];
-  for (const qs of tries) {
-    try {
-      const r = await fetch(`https://api.upstox.com/v2/instruments/search?${qs}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
-      if (!r.ok) continue;
-      const body = await r.json();
-      const rows = (body.data || []).filter(i => /^USDINR/i.test(i.trading_symbol || '') && /FUT/i.test(i.instrument_type || i.trading_symbol || ''));
-      const now = Date.now();
-      rows.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
-      // Skip contracts expiring within 2 days: on expiry day they stop trading and show a price of 0.
-      // If this search only found such a contract, try the next search (next month).
-      const pick = rows.find(i => !i.expiry || new Date(i.expiry).getTime() > now + 2 * 864e5);
-      if (pick && pick.instrument_key) return { key: pick.instrument_key, symbol: pick.trading_symbol };
-    } catch (e) {}
-  }
-  return null;
+// USD/INR fallback: the next few NSE USDINR futures contracts (weeklies + monthly) from Upstox's NSE file.
+// Skips contracts within 2 days of expiry; the handler then shows whichever has the most volume (usually the monthly).
+async function findUsdInrFuts() {
+  const all = await getJson(ASSETS + 'NSE.json.gz');
+  return all
+    .filter(i => i.instrument_type === 'FUT' && /^USDINR FUT /i.test(i.trading_symbol || '') && Number(i.expiry) > Date.now() + 2 * 864e5)
+    .sort((a, b) => Number(a.expiry) - Number(b.expiry))
+    .slice(0, 4)
+    .map(i => ({ key: i.instrument_key, symbol: i.trading_symbol }));
 }
 
 async function quotes(keys, token) {
@@ -141,8 +128,8 @@ module.exports = async (req, res) => {
 
   try {
     if (!cache.global || !cache.mcx || Date.now() - cache.at > TTL) {
-      const [g, m, u] = await Promise.all([loadGlobalList().catch(() => null), loadMcx().catch(() => null), findUsdInrFut(token).catch(() => null)]);
-      cache = { at: Date.now(), global: g || cache.global, mcx: m || cache.mcx, usdfut: u || cache.usdfut };
+      const [g, m, u] = await Promise.all([loadGlobalList().catch(() => null), loadMcx().catch(() => null), findUsdInrFuts().catch(() => null)]);
+      cache = { at: Date.now(), global: g || cache.global, mcx: m || cache.mcx, usdfut: (u && u.length) ? u : cache.usdfut };
     }
 
     // Match wanted instruments against the file
@@ -154,8 +141,8 @@ module.exports = async (req, res) => {
     }
 
     const mcx = cache.mcx || {};
-    const usdfut = cache.usdfut;
-    const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key, mcx.crude && mcx.crude.key, usdfut && usdfut.key].filter(Boolean);
+    const usdfuts = cache.usdfut || [];
+    const keys = [...Object.values(found), mcx.gold && mcx.gold.key, mcx.silver && mcx.silver.key, mcx.crude && mcx.crude.key, ...usdfuts.map(c => c.key)].filter(Boolean);
     const [q, y10, y30] = await Promise.all([
       Promise.all([
         quotesTolerant(keys.filter(k => !k.startsWith('GLOBAL_INDICATOR')), token),
@@ -176,6 +163,9 @@ module.exports = async (req, res) => {
     }
 
     // Upstox rejects GLOBAL_INDICATOR|USDINR for now, so fall back to the NSE USDINR futures price
+    // (the most-traded of the next few contracts; thin weeklies can show stale or zero prices).
+    const usdfut = usdfuts.filter(c => shape(q[c.key]))
+      .sort((a, b) => (Number(q[b.key].volume) || 0) - (Number(q[a.key].volume) || 0))[0];
     if (!markets.some(m => m.id === 'usdinr') && usdfut) {
       const s = shape(q[usdfut.key]);
       if (s) {
@@ -200,6 +190,7 @@ module.exports = async (req, res) => {
     };
     if (req.query && req.query.debug) {
       out.catalog = list.map(i => ({ name: i.name, key: i.instrument_key, latency: i.latency }));
+      out.usdinrCandidates = usdfuts.map(c => ({ ...c, last: q[c.key] && q[c.key].last_price, volume: q[c.key] && q[c.key].volume }));
       // Raw Upstox replies for anything missing, to see why it isn't returning a price
       const probe = WANT.filter(w => found[w.id] && !markets.some(m => m.id === w.id)).map(w => found[w.id]);
       out.probe = await Promise.all(probe.map(async (k) => {
