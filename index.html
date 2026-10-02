@@ -98,7 +98,15 @@
   .kicker{display:flex; align-items:center; gap:9px; font-size:.74rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--brand-ink); margin-bottom:14px;}
   .kicker img{height:16px; width:auto;}
   .kicker span{color:var(--muted); font-weight:500; letter-spacing:.04em; text-transform:none;}
-  .lead h1{font-family:var(--serif-d); font-weight:600; font-size:clamp(2rem,4.6vw,3.15rem); line-height:1.08; letter-spacing:-.018em; margin-bottom:16px; text-wrap:balance;}
+  .kicker .stage{color:var(--brand-ink); font-weight:700; font-size:.66rem; letter-spacing:.1em; border:1px solid var(--brand); padding:2px 7px; border-radius:2px;}
+  .cue-tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px;}
+  .cue-tabs button{font:inherit; font-size:.7rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; padding:6px 12px; border:1px solid var(--line); background:transparent; color:var(--muted); border-radius:2px; cursor:pointer;}
+  .cue-tabs button:hover{color:var(--brand-ink); border-color:var(--brand);}
+  .cue-tabs button[aria-selected="true"]{background:var(--brand-ink); border-color:var(--brand-ink); color:var(--paper);}
+  .triggers{margin-top:20px; padding-top:14px; border-top:1px solid var(--line);}
+  .triggers h4{font-family:var(--sans); font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); margin-bottom:6px;}
+  .triggers li{list-style:none; position:relative; padding:5px 0 5px 18px; font-size:.92rem; line-height:1.5; color:var(--body);}
+  .triggers li::before{content:'\203A'; position:absolute; left:2px; top:3px; color:var(--brand-ink); font-weight:700;}  .lead h1{font-family:var(--serif-d); font-weight:600; font-size:clamp(2rem,4.6vw,3.15rem); line-height:1.08; letter-spacing:-.018em; margin-bottom:16px; text-wrap:balance;}
   .dek{font-family:var(--serif); font-size:1.2rem; line-height:1.5; color:var(--muted); margin-bottom:22px; max-width:56ch;}
   .story{font-family:var(--serif); font-size:1.08rem; line-height:1.72; color:var(--body); max-width:64ch;}
   .story p + p{margin-top:1em;}
@@ -271,14 +279,16 @@
   <!-- Lead: Today's Cue (what happened) + Market Pulse (live headlines) -->
   <section class="lead" id="daily-cue">
     <article>
-      <div class="kicker"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAgCAYAAADjaQM7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANoSURBVEhLrZZLSJRRFMfPLgi0x6JdiIsWLvKBj8pNDx9FUUxIECo5370zo2Pq+EAQjRaZjwiEJgvMoJQ2URSJCuZ89/t85Ixa4xAYgbQJK7KHrSO4cb6Z0fnu3PE184ezmHvPd8695/y+8w3AdqUqV2Cp4QeotFTcSrxUZR6WGjmoxCtuJVbMlg3eSg6Tdg5vHBxUJUN0SZxU0gcLVzkwyiFQw0EjvaJLYjTu2AOMrsK0g4NGgzfT6E+YJkmia/xSid24FSYKm/GbWEXX+KWSOZhzmpPNO7FvM6JrfNJIjgGGbjMnm7CFymnLFB/ZubQQGJGJwpZQULSKvaBHgCFaQkHRJGCIljBQcGKIYIiGoDAaJyixwBAN92ewnBVxgMLog01LGDYERaX3xBBbE4KhkT9SMGYqo9cMUMivnYHCbA5YQKwlt9DomLS0OwbFo7yNAgNvychXGLOlAsNb2M37xkTZ7qdHt+ZKwfAb/RswfDT6HN5Vm/fXQNnORGGkXwoGnlyjZ0I+JVHJ0IyJslVQYoGBUDDlC4zW7jL8EAQsZXCCrFsYlNGyZDF0tHQEQ3KrgNF88wxkdFDqG1xTTL5SMRINBvbCV4W9OGr2tZ4OldZsuOYhPpNvlHS7HIzZKhxHAXRpKoIDXRcgq6EY9hvPMPrJeEY8HIKikywxxbpU8lBaFmx6wEVuHQZbSwGsthUDbyuClbvZcAn89a4QFGbDd5SR+2KKoIZL94FOo8GYsnPwOr9ZSpLIYH0OH3IT/ux2Oe9vzOWt+cAvNqeWgde5CpNCNTYEhdFK6Qnx3fK7ervzwN1+fjf3jw/w6Rc9/OPsMHcrKbw9A26Av/6R9DXAKqmEiKligBFq9vLNzM4j4O6wJPMF9oTPvHLzD74hfsd6kHekw3VY7jwmTRacKAIoHponBQMJVJUldKlJg8LHzTn8ZU85f9p9mffVpfPWAuBdJyE7eFj6WQ4Kxo0EZSMwNHIt7NZ0AupaTsH3lkIDkOXWs7A+dDXaIW0DgqKHQZlyysHAv9gTtr+gkpS1gADgOg57uy2Q1pwP5k/Ja+shmLL/M/5xRcZBUBj5Db7aZOyVCxZdwYmOG2F7X4tOI6aAm0lVPMZzkXEw7mIdxqrGWo/BbNUKMGq2OVwj58R4G0ojFph3xoo18h/U/Hg4GZFnJwAAAABJRU5ErkJggg==" alt="">Today&rsquo;s Cue <span>&middot; Thursday, 1 October</span></div>
-      <h1>Bond yields and weak auto sales drag the Nifty toward 22,300</h1>
-      <p class="dek">A global jump in bond yields and September auto sales that missed estimates pushed the Nifty down more than 1% by early afternoon, with the selling spread across most of the market.</p>
-      <div class="story">
+      <div class="cue-tabs" id="cue-tabs" role="tablist" aria-label="Cue updates today" hidden></div>
+      <div class="kicker"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAgCAYAAADjaQM7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAANoSURBVEhLrZZLSJRRFMfPLgi0x6JdiIsWLvKBj8pNDx9FUUxIECo5370zo2Pq+EAQjRaZjwiEJgvMoJQ2URSJCuZ89/t85Ixa4xAYgbQJK7KHrSO4cb6Z0fnu3PE184ezmHvPd8695/y+8w3AdqUqV2Cp4QeotFTcSrxUZR6WGjmoxCtuJVbMlg3eSg6Tdg5vHBxUJUN0SZxU0gcLVzkwyiFQw0EjvaJLYjTu2AOMrsK0g4NGgzfT6E+YJkmia/xSid24FSYKm/GbWEXX+KWSOZhzmpPNO7FvM6JrfNJIjgGGbjMnm7CFymnLFB/ZubQQGJGJwpZQULSKvaBHgCFaQkHRJGCIljBQcGKIYIiGoDAaJyixwBAN92ewnBVxgMLog01LGDYERaX3xBBbE4KhkT9SMGYqo9cMUMivnYHCbA5YQKwlt9DomLS0OwbFo7yNAgNvychXGLOlAsNb2M37xkTZ7qdHt+ZKwfAb/RswfDT6HN5Vm/fXQNnORGGkXwoGnlyjZ0I+JVHJ0IyJslVQYoGBUDDlC4zW7jL8EAQsZXCCrFsYlNGyZDF0tHQEQ3KrgNF88wxkdFDqG1xTTL5SMRINBvbCV4W9OGr2tZ4OldZsuOYhPpNvlHS7HIzZKhxHAXRpKoIDXRcgq6EY9hvPMPrJeEY8HIKikywxxbpU8lBaFmx6wEVuHQZbSwGsthUDbyuClbvZcAn89a4QFGbDd5SR+2KKoIZL94FOo8GYsnPwOr9ZSpLIYH0OH3IT/ux2Oe9vzOWt+cAvNqeWgde5CpNCNTYEhdFK6Qnx3fK7ervzwN1+fjf3jw/w6Rc9/OPsMHcrKbw9A26Av/6R9DXAKqmEiKligBFq9vLNzM4j4O6wJPMF9oTPvHLzD74hfsd6kHekw3VY7jwmTRacKAIoHponBQMJVJUldKlJg8LHzTn8ZU85f9p9mffVpfPWAuBdJyE7eFj6WQ4Kxo0EZSMwNHIt7NZ0AupaTsH3lkIDkOXWs7A+dDXaIW0DgqKHQZlyysHAv9gTtr+gkpS1gADgOg57uy2Q1pwP5k/Ja+shmLL/M/5xRcZBUBj5Db7aZOyVCxZdwYmOG2F7X4tOI6aAm0lVPMZzkXEw7mIdxqrGWo/BbNUKMGq2OVwj58R4G0ojFph3xoo18h/U/Hg4GZFnJwAAAABJRU5ErkJggg==" alt="">Today&rsquo;s Cue <span id="cue-kdate">&middot; Thursday, 1 October</span><span class="stage" id="cue-stage">Mid-day &middot; 1:00 pm IST</span></div>
+      <h1 id="cue-h1">Bond yields and weak auto sales drag the Nifty toward 22,300</h1>
+      <p class="dek" id="cue-dek">A global jump in bond yields and September auto sales that missed estimates pushed the Nifty down more than 1% by early afternoon, with the selling spread across most of the market.</p>
+      <div class="story" id="cue-story">
         <p>The overnight cue came from the bond market. The US 10-year yield climbed above 5.25%, a level not seen since 2007, and higher yields tend to pull money out of equities, especially in emerging markets. Europe and the Dow were lower and GIFT Nifty pointed to a weak start, which is how the day began.</p>
         <p>Then came the auto numbers. Sales for September fell short of estimates, and the Nifty Auto index dropped close to 4%, the weakest sector of the day, with Bajaj Auto down more than 6%. Media, metals and realty also lost over 2%. In the Nifty 500, only 58 stocks were rising against 442 falling, and the India VIX jumped more than 13% to about 15.3, a sign that traders are paying more for protection.</p>
         <p>The Nifty was trading near 22,340, down about 1.25%, so the 22,300 mark is the level to watch. Weak auto volumes and costlier money raise questions about earnings for the July&ndash;September quarter, whose results begin next month. Crude was up about 2% and the rupee weaker near 96.4 to the dollar, which adds to the pressure.</p>
       </div>
+      <div class="triggers" id="cue-triggers" hidden></div>
       <div class="byline">CapitCue desk &middot; For information only, not investment advice</div>
     </article>
     <aside class="pulse" aria-label="Market Pulse">
@@ -344,9 +354,9 @@
         </div>
         <div class="panel">
           <h3>Institutional flows</h3>
-          <div class="flow num"><span>FII</span><div class="bar"><i style="right:50%; width:42.3%; background:var(--down)"></i></div><b class="down">&minus;&#8377;10,148 Cr</b></div>
-          <div class="flow num"><span>DII</span><div class="bar"><i style="left:50%; width:47%; background:var(--up)"></i></div><b class="up">+&#8377;11,272 Cr</b></div>
-          <div class="net num">Cash market, 30 September &middot; FII index futures net short 2.67 lakh contracts</div>
+          <div class="flow num"><span>FII</span><div class="bar"><i style="right:50%; width:39.5%; background:var(--down)"></i></div><b class="down">&minus;&#8377;9,484 Cr</b></div>
+          <div class="flow num"><span>DII</span><div class="bar"><i style="left:50%; width:41.9%; background:var(--up)"></i></div><b class="up">+&#8377;10,042 Cr</b></div>
+          <div class="net num">Cash market, 1 October (provisional) &middot; FIIs have sold about &#8377;29,600 Cr over the last three sessions</div>
         </div>
       </div>
     </section>
@@ -585,7 +595,41 @@
     window.addEventListener('resize', update);
     update();
   })();
-  renderTicker(); clock(); market(); stocks(); globalMkts(); pulse();
+  // ----- Today's Cue: loaded from /data/cue.json (edit that file to add or change a cue; the text above is the fallback) -----
+  var cueList = [], cueIdx = 0, cuePicked = false;
+  function cueDay(iso){ return new Date(iso).toLocaleDateString('en-CA',{timeZone:TZ}); }
+  function cueValid(c){ return c && typeof c.headline === 'string' && c.headline && typeof c.updated === 'string' && !isNaN(Date.parse(c.updated)) && Array.isArray(c.story) && c.story.length; }
+  function cueShow(i){
+    var c = cueList[i]; if(!c) return; cueIdx = i;
+    $('cue-kdate').textContent = '· ' + new Date(c.updated).toLocaleDateString('en-IN',{timeZone:TZ, weekday:'long', day:'numeric', month:'long'});
+    var st = $('cue-stage'); st.textContent = (c.stage || '') + (c.time ? ' · ' + c.time : ''); st.hidden = !c.stage;
+    $('cue-h1').textContent = c.headline;
+    $('cue-dek').textContent = c.dek || ''; $('cue-dek').hidden = !c.dek;
+    $('cue-story').innerHTML = c.story.map(function(p){ return '<p>'+esc(p)+'</p>'; }).join('');
+    var tr = $('cue-triggers');
+    if(Array.isArray(c.triggers) && c.triggers.length){ tr.innerHTML = '<h4>' + esc(c.triggersTitle || 'Today’s triggers') + '</h4><ul>' + c.triggers.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('') + '</ul>'; tr.hidden = false; } else { tr.hidden = true; tr.innerHTML = ''; }
+    var tabs = $('cue-tabs');
+    if(cueList.length > 1){
+      tabs.innerHTML = cueList.map(function(x, k){ return '<button type="button" role="tab" data-i="'+k+'" aria-selected="'+(k === i)+'">'+esc(x.stage || ('Update ' + (k+1)))+'</button>'; }).join('');
+      tabs.hidden = false;
+    } else { tabs.hidden = true; tabs.innerHTML = ''; }
+  }
+  $('cue-tabs').addEventListener('click', function(e){ var b = e.target.closest('button[data-i]'); if(b){ cuePicked = true; cueShow(+b.dataset.i); } });
+  function cueLoad(){
+    fetch('/data/cue.json',{cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        var all = d && Array.isArray(d.cues) ? d.cues.filter(cueValid) : [];
+        if(!all.length) return;                                   // keep the built-in text
+        var day = cueDay(all[all.length - 1].updated), todays = all.filter(function(c){ return cueDay(c.updated) === day; });
+        var grew = todays.length !== cueList.length;
+        cueList = todays;
+        if(grew || !cuePicked){ cuePicked = false; cueShow(cueList.length - 1); }   // newest cue shown; a reader's tab choice is kept between refreshes
+      })
+      .catch(function(){});
+  }
+  renderTicker(); clock(); market(); stocks(); globalMkts(); pulse(); cueLoad();
+  setInterval(cueLoad, 180000);
   setInterval(pulse, 300000);
   setInterval(globalMkts, 180000);
   setInterval(clock, 60000);
