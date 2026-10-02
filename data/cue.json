@@ -1,0 +1,52 @@
+{
+  "cues": [
+    {
+      "stage": "Pre-market",
+      "updated": "2026-10-01T08:30:00+05:30",
+      "headline": "US bond yields above 5% point to another weak opening for India",
+      "dek": "Rising US yields trimmed Wall Street's gains overnight, while Micron's results lifted chip and AI stocks across Asia. Indian markets are indicated lower at the open.",
+      "story": [
+        "US bonds continue to trouble the markets. The 10-year Treasury yield is above 5% and the 30-year yield also moved higher, which triggered profit booking in US equities. Wall Street closed mixed, though the Nasdaq finished in the green, helped by Micron's better-than-expected results.",
+        "In Asia, semiconductor and AI-related stocks are trading higher after Micron's numbers. Chinese markets remain closed until 6 October. Later this week the US has Accenture results and the key jobs data, which could shape expectations for the Fed's next rate move.",
+        "Indian markets remain under pressure, and early indications point to another lower opening today. FIIs sold over ₹10,000 crore yesterday, taking the last three days' selling to about ₹25,000 crore."
+      ],
+      "triggers": [
+        "Sensex weekly expiry is today.",
+        "FII selling: whether it continues after three heavy sessions.",
+        "Monsoon remains a concern.",
+        "US jobs data and Accenture results, later this week."
+      ]
+    },
+    {
+      "stage": "Mid-day",
+      "time": "1:00 pm IST",
+      "updated": "2026-10-01T13:00:00+05:30",
+      "headline": "Bond yields and weak auto sales drag the Nifty toward 22,300",
+      "dek": "A global jump in bond yields and September auto sales that missed estimates pushed the Nifty down more than 1% by early afternoon, with the selling spread across most of the market.",
+      "story": [
+        "The overnight cue came from the bond market. The US 10-year yield climbed above 5.25%, a level not seen since 2007, and higher yields tend to pull money out of equities, especially in emerging markets. Europe and the Dow were lower and GIFT Nifty pointed to a weak start, which is how the day began.",
+        "Then came the auto numbers. Sales for September fell short of estimates, and the Nifty Auto index dropped close to 4%, the weakest sector of the day, with Bajaj Auto down more than 6%. Media, metals and realty also lost over 2%. In the Nifty 500, only 58 stocks were rising against 442 falling, and the India VIX jumped more than 13% to about 15.3, a sign that traders are paying more for protection.",
+        "The Nifty was trading near 22,340, down about 1.25%, so the 22,300 mark is the level to watch. Weak auto volumes and costlier money raise questions about earnings for the July–September quarter, whose results begin next month. Crude was up about 2% and the rupee weaker near 96.4 to the dollar, which adds to the pressure."
+      ]
+    },
+    {
+      "stage": "Post-market",
+      "updated": "2026-10-01T19:30:00+05:30",
+      "headline": "Nifty ends its eighth straight weekly loss, the longest streak in 25 years",
+      "dek": "The Nifty closed at 22,422, down 0.9% on the day, as FIIs sold about ₹9,484 crore for a third heavy session. IT was the one bright spot, and Accenture's results lifted Infosys and Wipro ADRs after the close.",
+      "story": [
+        "The Nifty ended Thursday at 22,421.95, down 0.88%, and the Sensex at 71,909.70, down 0.79%. The index held above the 22,300 mark flagged at midday. It completed an eighth straight weekly fall, its longest losing streak in about 25 years, with roughly 2,150 points lost over the eight weeks. Markets are closed on Friday for Gandhi Jayanti, so the week ends here.",
+        "Selling was broad. Nifty Auto fell about 3.5% after weak September sales, with Bajaj Auto down more than 7%, and media, metals, consumer durables, FMCG and realty each lost roughly 1.5% to 2.5%. Only 115 stocks in the Nifty 500 gained against 384 that fell, and the India VIX rose about 7% to 14.5. Nifty IT rose more than 2%, the one strong sector, while private banks were flat.",
+        "FIIs sold ₹9,484 crore of equities on Thursday (provisional NSE data), the third session in a row of selling near ₹10,000 crore, taking the last three sessions to about ₹29,600 crore. DIIs bought ₹10,042 crore, absorbing nearly all of it.",
+        "After the close, Accenture beat estimates with fourth-quarter revenue of $18.7 billion, up 6%, against $18.04 billion expected, and guided for 3% to 6% revenue growth in fiscal 2027. Infosys's ADR rose about 8% and Wipro's about 3% by 5 pm IST, a cue for Indian IT stocks when trading resumes on Monday. Separately, HDFC Bank named Anup Bagchi as its next MD and CEO after RBI approval, according to a stock exchange filing."
+      ],
+      "triggersTitle": "Next session",
+      "triggers": [
+        "Markets are shut on Friday 2 October for Gandhi Jayanti; trading resumes on Monday.",
+        "Indian IT: how Infosys and Wipro react to the ADR gains after Accenture's results.",
+        "FII flows: whether the selling continues after three sessions near ₹10,000 crore.",
+        "US jobs data, which could shape expectations for the Fed's next rate move."
+      ]
+    }
+  ]
+}
